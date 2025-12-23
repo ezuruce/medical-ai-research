@@ -44,7 +44,8 @@ export default function ChatInterface() {
     'URGENT_CARE': 'bg-orange-500 text-white',
     'PRIMARY_CARE': 'bg-yellow-500 text-white',
     'MONITOR': 'bg-blue-400 text-white',
-    'SAFE': 'bg-green-500 text-white'   };
+    'SAFE': 'bg-green-500 text-white'
+  };
 
   const riskColors: { [key: string]: string } = {
     '[LOW]': 'bg-green-100 text-green-800',
@@ -74,7 +75,7 @@ export default function ChatInterface() {
   const sendMessage = async () => {
     if (!userInput.trim()) return;
 
-    const userMessage: ChatMessage = { role: 'user', content: userInput}
+    const userMessage: ChatMessage = { role: 'user', content: userInput }
     const updatedMessages = [
       ...messages,
       userMessage,
@@ -82,21 +83,21 @@ export default function ChatInterface() {
     setMessages(updatedMessages);
     setUserInput('');
     setIsTyping(true);
-    
+
     console.log('debug1')
 
     try {
       // Send the entire conversation history to the backend
       // input is diagnosis: { name, status}
       // ouptut is lastDiagnosis: '1: {name} [{status}]\n 2:...'
-      console.log("Last",diagnosis)
+      console.log("Last", diagnosis)
       const toLastDiagnosis = (name: string, status: string, index: number): string => `${index}. ${name}: ${status}`;
-      const lastDiagnosis = diagnosis.map(({name, status}, index) => toLastDiagnosis(name, status, index))
-      const last = [{"role": "assisstant","content": lastDiagnosis.join("\n")}]
+      const lastDiagnosis = diagnosis.map(({ name, status }, index) => toLastDiagnosis(name, status, index))
+      const last = [{ "role": "assistant", "content": lastDiagnosis.join("\n") }]
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversation: updatedMessages, lastDiagnosis: last}),
+        body: JSON.stringify({ conversation: updatedMessages, lastDiagnosis: last }),
       });
 
       const data = await response.json();
@@ -139,22 +140,20 @@ export default function ChatInterface() {
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`flex flex-col ${
-                  msg.role === 'user' ? 'items-end' : 'items-start'
-                }`}
+                className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'
+                  }`}
               >
                 <div
-                  className={`p-4 rounded-2xl max-w-[80%] transition-all duration-300 ${
-                    msg.role === 'user'
+                  className={`p-4 rounded-2xl max-w-[80%] transition-all duration-300 ${msg.role === 'user'
                       ? 'bg-blue-500 text-white self-end rounded-tr-none'
                       : 'bg-gray-100 text-gray-800 self-start rounded-tl-none'
-                  }`}
+                    }`}
                 >
                   {msg.content as string}
                 </div>
               </div>
             ))}
-            
+
             {isTyping && (
               <div className="flex space-x-2 items-center">
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
@@ -214,9 +213,8 @@ export default function ChatInterface() {
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-600 mb-2">Urgency</h3>
               <div
-                className={`p-3 rounded-lg text-center font-semibold ${
-                  urgencyColors[urgency.code]
-                }`}
+                className={`p-3 rounded-lg text-center font-semibold ${urgencyColors[urgency.code]
+                  }`}
               >
                 {urgency.text}
               </div>
@@ -238,9 +236,8 @@ export default function ChatInterface() {
                         {disease.name}
                       </span>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          statusColors[disease.status]
-                        }`}
+                        className={`px-2 py-1 rounded-full text-xs ${statusColors[disease.status]
+                          }`}
                       >
                         {disease.status}
                       </span>
@@ -265,9 +262,8 @@ export default function ChatInterface() {
                       {risk.condition}
                     </span>
                     <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        riskColors[risk.riskLevel]
-                      }`}
+                      className={`px-2 py-1 rounded-full text-xs ${riskColors[risk.riskLevel]
+                        }`}
                     >
                       {risk.riskLevel}
                     </span>
