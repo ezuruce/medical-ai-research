@@ -145,8 +145,8 @@ export default function ChatInterface() {
               >
                 <div
                   className={`p-4 rounded-2xl max-w-[80%] transition-all duration-300 ${msg.role === 'user'
-                      ? 'bg-blue-500 text-white self-end rounded-tr-none'
-                      : 'bg-gray-100 text-gray-800 self-start rounded-tl-none'
+                    ? 'bg-blue-500 text-white self-end rounded-tr-none'
+                    : 'bg-gray-100 text-gray-800 self-start rounded-tl-none'
                     }`}
                 >
                   {msg.content as string}
@@ -199,9 +199,19 @@ export default function ChatInterface() {
                 </svg>
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              This is not a substitute for professional medical advice
-            </p>
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-xs text-gray-500">
+                This is not a substitute for professional medical advice
+              </p>
+              <a
+                href="https://www.linkedin.com/in/ezuruce/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
+              >
+                About the Developer
+              </a>
+            </div>
           </div>
         </div>
 
