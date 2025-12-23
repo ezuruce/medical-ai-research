@@ -82,13 +82,21 @@ export default function ChatInterface() {
     setMessages(updatedMessages);
     setUserInput('');
     setIsTyping(true);
+    
+    console.log('debug1')
 
     try {
       // Send the entire conversation history to the backend
+      // input is diagnosis: { name, status}
+      // ouptut is lastDiagnosis: '1: {name} [{status}]\n 2:...'
+      console.log("Last",diagnosis)
+      const toLastDiagnosis = (name: string, status: string, index: number): string => `${index}. ${name}: ${status}`;
+      const lastDiagnosis = diagnosis.map(({name, status}, index) => toLastDiagnosis(name, status, index))
+      const last = [{"role": "assisstant","content": lastDiagnosis.join("\n")}]
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversation: updatedMessages }),
+        body: JSON.stringify({ conversation: updatedMessages, lastDiagnosis: last}),
       });
 
       const data = await response.json();
@@ -200,7 +208,7 @@ export default function ChatInterface() {
 
         {/* Sidebar for Indicators */}
         <div className="w-full md:w-80 bg-white rounded-2xl shadow-xl p-6">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Assessment Summary</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Assessment Summary</h2>
           {/* Urgency Indicator */}
           {urgency && (
             <div className="mb-6">

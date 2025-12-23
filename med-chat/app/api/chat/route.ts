@@ -9,7 +9,7 @@ const chatSystemText = `You are a medical AI assistant designed to gather patien
 4. If data is incomplete, ask clarifying questions before making an assessment.
 Maintain ethical, unbiased, and privacy-conscious responses at all times. Answer concisely and only ask one question at a time.`
 
-const chatSystemMessage = {'role': 'system','content': chatSystemText}
+const chatSystemMessage = { 'role': 'system', 'content': chatSystemText }
 
 
 function getRiskSystemText(condition: string): ChatMessage {
@@ -24,23 +24,24 @@ Example Response 3:
 Example Response 4:
 [MORE_INFO]
 `
-  const riskSystemMessage = {role: 'system', content: riskSystemText}
+  const riskSystemMessage = { role: 'system', content: riskSystemText }
   return riskSystemMessage as ChatMessage
 }
 
 const diagnosisSystemText = `
+You are a medical AI assistant trained to analyze patient data and suggest potential conditions based on symptoms, medical history, and lifestyle factors.
+Your goal is to evaluate given conversational data as well as the diagnosis at that point and provide a new diagnosis based off new data if there is any.
 Select a diseases that you feel will be of utmost importance and are the most risky.
-Respond with only the diseases and a [TRUE] or [FALSE] if they have been confirmed or not confirmed to have the disease or [MORE_INFO] if you do not have enough information.
-You are a medical AI assistant trained to analyze patient data and suggest potential conditions based on symptoms, medical history, and lifestyle factors. Your goal is to evaluate given conversational data as well as the diagnosis at that point and provide a new diagnosis based off new data if there is any.
+Respond with only the diseases and a [TRUE] if they have been confirmed to have the disease or [MORE_INFO] if you do not have enough information.
 If more then one is [TRUE] you must set one as [ALSO_POSSIBLE]
-1. Base assessments on medical correlations and established patterns. When these similar diseases are no longer possible change them to [FALSE].
+1. Base assessments on medical correlations and established patterns.
 Example Response:
-1. Disease A - [TRUE]
-2. Disease B - [FALSE]
-3. Disease C - [MORE_INFO]`
+    1. Disease A - [TRUE]
+    2. Disease B - [ALSO_POSSIBLE]
+    3. Disease C - [MORE_INFO]`
 
 
-const diagnosisSystemMessage = {role:'system',content: diagnosisSystemText}
+const diagnosisSystemMessage = { role: 'system', content: diagnosisSystemText }
 
 const urgencySystemText = `You are a medical AI assistant assessing whether a patient's symptoms are urgent or not. 
 Base your response on medical patterns and provide clear guidance based on the symptoms provided.
@@ -64,7 +65,7 @@ User: I have a cough.
 Response: [MONITOR] Watch symptoms and seek care if they worsen.  
 `
 
-const urgencySystemMessage = {role: 'system', content:urgencySystemText}
+const urgencySystemMessage = { role: 'system', content: urgencySystemText }
 
 
 const AZURE_OPENAI_HOST = process.env.AZURE_OPENAI_HOST as string
@@ -75,24 +76,46 @@ interface ChatMessage {
   content: string;
 }
 
+// async function _get_google_role(role) {
+//   if (role != "system") {
+//     role = role;
+//   }
+//   else {
+//     role = "user";
+//   }
+// }
 
-async function get_model_response(messages: ChatMessage[], stop=null, max_tokens=512) {
+// async function get_genai_response(messages: ChatMessage[], stop = null, max_token =512) {
+//   const chat_history = [{'role': _get_google_role(message['role']),'parts':[message['content']]} for message in messages]
+
+//}
+// chat_history = [
+//     {'role': _get_google_role(message['role']),'parts':[message['content']]}
+//     for message in messages
+// ]
+
+// genai.configure(api_key=GOOGLE_GENAI_KEY)
+// model = genai.GenerativeModel("gemini-1.5-flash")
+// response = model.generate_content(chat_history)
+// return response.text
+
+async function get_model_response(messages: ChatMessage[], stop = null, max_tokens = 512) {
   const api_key = AZURE_OPENAI_KEY
-  const headers = {"api-key": api_key, 'Content-Type': 'application/json'}
-  
   const url = AZURE_OPENAI_HOST
+  const headers = { "api-key": api_key, 'Content-Type': 'application/json' }
   const generation_params = {
-      "frequency_penalty": 0.,
-      "presence_penalty": 0., 
-      "max_tokens": max_tokens,
-      "stop": stop,
-      "temperature": 0,
-      "top_p": 1,
-      "n": 1
+    "frequency_penalty": 0.,
+    "presence_penalty": 0.,
+    "max_tokens": max_tokens,
+    "stop": stop,
+    "temperature": 0,
+    "top_p": 1,
+    "n": 1
   }
   const method = 'POST';
-  const body =JSON.stringify({messages: messages, ...generation_params})
-  const response = await fetch(url, {method, headers, body})
+
+  const body = JSON.stringify({ messages: messages, ...generation_params })
+  const response = await fetch(url, { method, headers, body })
   const data = await response.json()
   const content = data["choices"][0]["message"]["content"]
   const cleaned_content = content.trim()
@@ -106,17 +129,17 @@ function getUrgency(urgencyResponse: string) {
   // Get the extracted code and text separately
   const code = match ? match[1] : null;
   const text = urgencyResponse
-  return {code, text}
+  return { code, text }
 }
 
 async function getRisk(condition: string, messages: ChatMessage[]) {
   const riskSystemMessage = getRiskSystemText(condition)
   const riskMessages = [riskSystemMessage, ...messages];
   let riskLevel = await get_model_response(riskMessages);
-  if(!['[LOW]', '[MEDIUM]', '[HIGH]'].includes(riskLevel)) {
+  if (!['[LOW]', '[MEDIUM]', '[HIGH]'].includes(riskLevel)) {
     riskLevel = '[MORE_INFO]'
   }
-  const risk = {condition, riskLevel}
+  const risk = { condition, riskLevel }
   return risk
 }
 
@@ -124,20 +147,20 @@ async function getRisk(condition: string, messages: ChatMessage[]) {
 export async function POST(request: Request) {
   const request_json = await request.json()
   const messages = request_json.conversation;
+  const { lastDiagnosis = [] } = request_json;
   const chatMessages = [chatSystemMessage, ...messages];
   const urgencyMessages = [urgencySystemMessage, ...messages];
-  const diagnosisMessages = [diagnosisSystemMessage, ...messages.slice(0,-1), messages[messages.length-1]];
+  const diagnosisMessages = [diagnosisSystemMessage, ...messages.slice(0, -1), ...lastDiagnosis, messages[messages.length - 1]];
   const text = await get_model_response(chatMessages);
   const risks = [await getRisk('Hypertension', messages), await getRisk('Diabetes', messages), await getRisk('Depression', messages)]
   const urgencyResponse = await get_model_response(urgencyMessages);
   const urgency = getUrgency(urgencyResponse)
   const diagnosisResponse = await get_model_response(diagnosisMessages);
   const diagnosis = diagnosisResponse.split("\n").map(
-    (line:string) => {
+    (line: string) => {
       const match = line.match(/(\d+)\. (.+?) - \[(.+?)\]/);
-      return match ? {name: match[2], status: match[3]} : null;
-  }).filter(Boolean);
-  const response = {urgency, diagnosis, risks, text}
-  console.log({response: JSON.stringify(response)})
+      return match ? { name: match[2], status: match[3] } : null;
+    }).filter(Boolean);
+  const response = { urgency, diagnosis, risks, text }
   return NextResponse.json(response);
 }
