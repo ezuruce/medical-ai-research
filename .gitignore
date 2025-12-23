@@ -3,3 +3,4 @@
 __pycache__/
 **/*.temp.json
 /med-chat/run
+/_2025_lasc_results
